@@ -1,0 +1,85 @@
+{
+  "project_info": {
+    "project_number": "117054791856",
+    "firebase_url": "https://bettertinder-4ff52-default-rtdb.firebaseio.com",
+    "project_id": "bettertinder-4ff52",
+    "storage_bucket": "bettertinder-4ff52.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:117054791856:android:46b30216190a1c8f365b75",
+        "android_client_info": {
+          "package_name": "com.bettertinderjs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "117054791856-g20qs8a182tqm4sdq1s3sab26as775o7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bettertinderjs",
+            "certificate_hash": "638dedbff9af2c605949278969a5d7d9b4a39644"
+          }
+        },
+        {
+          "client_id": "117054791856-fbt33eef89m84h1d56f0u0qgdf2u3fer.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNanvAT84h7ikPqtNv2rf0UIygC5ToHSA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "117054791856-fbt33eef89m84h1d56f0u0qgdf2u3fer.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:117054791856:android:1750b467a63c4357365b75",
+        "android_client_info": {
+          "package_name": "com.worsetinder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "117054791856-15itt386dr3tjtt6epaetj5oh07af474.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.worsetinder",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "117054791856-fbt33eef89m84h1d56f0u0qgdf2u3fer.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNanvAT84h7ikPqtNv2rf0UIygC5ToHSA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "117054791856-fbt33eef89m84h1d56f0u0qgdf2u3fer.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
