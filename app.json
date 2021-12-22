@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "worsetinder",
+    "slug": "worsetinder",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  },
+  "name": "worsetinder"
+}
