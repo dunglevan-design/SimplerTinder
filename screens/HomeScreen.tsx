@@ -15,10 +15,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import tw from "tailwind-rn";
 
+
 const DUMMY_DATA = [
   {
-    firstName: "elon",
-    lastName: "musk",
+    fullName: "Elon Musk",
     occupation: "software engineer",
     photoURL:
       "https://upload.wikimedia.org/wikipedia/commons/8/85/Elon_Musk_Royal_Society_%28crop1%29.jpg",
@@ -27,8 +27,7 @@ const DUMMY_DATA = [
     tags: ["Nooby", "Hailer", "Stripper", "CEO", "Nothing at all"],
   },
   {
-    firstName: "alnane",
-    lastName: "molan",
+    fullName: "alane Mulan",
     occupation: "software engineer",
     photoURL:
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTh5mmILTkRwAc266VWD17KfsQL9nk1RuYjEyN9WMzkmOaJxYhq8hIJn5edKcYoEk80VPI&usqp=CAU",
@@ -37,8 +36,7 @@ const DUMMY_DATA = [
     tags: ["guitarist", "randomshit", "lover", "flirter"],
   },
   {
-    firstName: "Jun",
-    lastName: "Le",
+    fullName: "Jun Le",
     occupation: "software engineer boss",
     photoURL:
       "https://scontent.fhan2-4.fna.fbcdn.net/v/t1.6435-9/60045428_1180040428834922_7963564425636478976_n.jpg?_nc_cat=105&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=3MRSMXBrGNEAX8EBP19&_nc_ht=scontent.fhan2-4.fna&oh=3f23c56b7d613e36f1145e5051276e4d&oe=61CC248B",
@@ -87,6 +85,12 @@ export default function HomeScreen({ navigation }) {
       });
     }
   };
+
+  useEffect(() => {
+    navigation.setOptions({
+      animation: "slide_from_right",
+    })
+  }, [])
 
 
   const onSwipeRequirementUnfulfilled = (index) => {
@@ -149,7 +153,7 @@ export default function HomeScreen({ navigation }) {
             source={{ uri: user?.photoURL }}
           />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("Modal")}>
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
           <Image
             style={tw("h-14 w-14")}
             source={require("../images/applogo.png")}
@@ -201,7 +205,7 @@ export default function HomeScreen({ navigation }) {
                   {/* Main InFO */}
                   <View style={tw("mb-2")}>
                     <Text style={tw("text-3xl font-bold text-white")}>
-                      {tinderer.firstName} {tinderer.lastName}{" "}
+                      {tinderer.fullName}{" "}
                       <Text style={tw("text-xl font-light")}>
                         {tinderer.age}
                       </Text>
