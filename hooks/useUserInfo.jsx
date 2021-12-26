@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import firestore from '@react-native-firebase/firestore';
+import { useEffect, useState, createContext, useContext } from "react";
+import firestore from "@react-native-firebase/firestore";
+import useAuth from "./useAuth";
 
 const DUMMY_DATA = [
   {
@@ -30,21 +31,44 @@ const DUMMY_DATA = [
     tags: ["handsome", "chaser", "solver", "football"],
   },
 ];
-export const useUserInfo = (userid) => {
-  const user = DUMMY_DATA[2];
-  const [userInfo, setUserInfo] = useState(null);
 
-  useEffect(() => {
-    const unsubscribe = firestore().collection("users").doc(userid).onSnapshot(
-        documentSnapshot => {
-            setUserInfo(documentSnapshot.data());
-        }
-    )
-    setUserInfo(user);
+const UserInfoContext = createContext({
+  userInfo: {
+    fullName: "",
+    occupation: "",
+    photoURL: "",
+    age: 0,
+    id: 0,
+    tags: [],
+  },
+});
 
-    return unsubscribe;
-  }, [userid]);
+export const UserInfoProvider = ({ children }) => {
+    const {user} = useAuth();
+    const [userInfo, setUserInfo] = useState({});
+    
+    useEffect(() => {
+        const unsubscribe = firestore()
+        .collection('users')
+        .doc(user?.uid)
+        .onSnapshot(documentSnapshot => {
+          setUserInfo(documentSnapshot.data());
+        });
+        return unsubscribe;
+    }, []);
+
+    useEffect(() => {
+        console.log("user: ",user);
+    }, [user])
 
 
-  return {userInfo, setUserInfo};
+    return (
+        <UserInfoContext.Provider value = {{userInfo}}>
+            {children}
+        </UserInfoContext.Provider>
+    );
 };
+
+export const useUserInfo = () => {
+    return useContext(UserInfoContext);
+}

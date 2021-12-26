@@ -16,7 +16,7 @@ const Dictionary = {
   fullName: "fullName",
 };
 const ModalScreen = ({ navigation }) => {
-  const { userInfo, setUserInfo } = useUserInfo();
+  const { userInfo } = useUserInfo();
   useEffect(() => {
     navigation.setOptions({
       animation: "slide_from_right",
@@ -44,16 +44,14 @@ const ModalScreen = ({ navigation }) => {
 
         <InfoForm
           userInfo={userInfo}
-          setUserInfo={setUserInfo}
           type="fullName"
         />
         <InfoForm
           userInfo={userInfo}
-          setUserInfo={setUserInfo}
           type="occupation"
         />
-        <InfoForm userInfo={userInfo} setUserInfo={setUserInfo} type="age" />
-        <InfoForm userInfo={userInfo} setUserInfo={setUserInfo} type="photoURL" />
+        <InfoForm userInfo={userInfo} type="age" />
+        <InfoForm userInfo={userInfo} type="photoURL" />
 
         <View style={tw("w-full justify-center items-center mt-6 mb-6")}>
           <TouchableOpacity
@@ -71,31 +69,18 @@ const ModalScreen = ({ navigation }) => {
   );
 };
 
-const InfoForm = ({ userInfo, setUserInfo, type }) => {
+const InfoForm = ({ userInfo,  type }) => {
   const setUserInfoBasedOntype = (userinfo, text, type) => {
     if (type === "fullName") {
-      setUserInfo({
-        ...userinfo,
-        fullName: text,
-      });
     } else if (type === "age") {
-      
-      setUserInfo({
-        ...userinfo,
-        age: text !== "" ? parseInt(text) : text,
-      });
     }
     else if (type === "occupation"){
-        setUserInfo({
-            ...userinfo,
-            occupation: text,
-        })
     }
     else if (type === "photoURL"){
-        setUserInfo({
-            ...userinfo,
-            photoURL: text,
-        })
+        // setUserInfo({
+        //     ...userinfo,
+        //     photoURL: text,
+        // })
     }
   };
 

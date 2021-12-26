@@ -14,6 +14,7 @@ import { FontAwesome5 } from "@expo/vector-icons";
 import { LinearGradient } from 'expo-linear-gradient';
 
 import tw from "tailwind-rn";
+import { useUserInfo } from "../hooks/useUserInfo";
 
 
 const DUMMY_DATA = [
