@@ -6,6 +6,7 @@ import {
   Image,
   StyleSheet,
   Button,
+  Alert,
 } from "react-native";
 import useAuth from "../hooks/useAuth";
 import TinderCard from "react-tinder-card";
@@ -103,9 +104,12 @@ export default function HomeScreen({ navigation }) {
     const subscriber = firestore()
       .collection("users")
       .onSnapshot((snapshot) => {
-        setcurrentIndex(snapshot.docs.length - 1);
+        const filteredSnapshot = snapshot.docs.filter(
+          (doc) => doc.id !== user.uid
+        );
+        setcurrentIndex(filteredSnapshot.length - 1);
         setTinderers(
-          snapshot.docs.map((doc) => ({
+          filteredSnapshot.map((doc) => ({
             id: doc.id,
             ...doc.data(),
           }))
@@ -138,7 +142,12 @@ export default function HomeScreen({ navigation }) {
 
   const Swipe = (direction) => {
     console.log("swiping ", direction, currentIndex);
-    cardref.current[currentIndex].swipe(direction);
+    if(currentIndex < 0){
+      Alert.alert("Worse Tinder", "No more profiles, go get a life")
+    }
+    else {
+      cardref.current[currentIndex].swipe(direction);
+    }
   };
 
   const canUndo = () => {
@@ -168,6 +177,139 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     setcanSwipe(true);
   }, [currentIndex]);
+
+
+  const Cards = tinderers.map((tinderer, index) => (
+    <View style={tw("absolute w-full h-full")} key={index}>
+      <TinderCard
+        onSwipeRequirementFulfilled={(direction) =>
+          onSwipeRequirementFulfilled(index, direction)
+        }
+        onSwipeRequirementUnfulfilled={() =>
+          onSwipeRequirementUnfulfilled(index)
+        }
+        onCardLeftScreen={() => onCardLeftScreen()}
+        flickOnSwipe={true}
+        preventSwipe={["up", "down"]}
+        swipeRequirementType="position"
+        swipeThreshold={100}
+        onSwipe={() => setcanSwipe(false)}
+        ref={(el) => (cardref.current[index] = el)}
+
+        // style={tw("flex-1 items-center content-center flex")}
+      >
+        <View
+          style={[
+            tw(
+              "w-full self-center h-full items-center flex rounded-xl relative"
+            ),
+            { paddingBottom: 80 },
+          ]}
+        >
+          <Image
+            source={{ uri: tinderer.photoURL }}
+            style={[
+              tw("absolute top-0 h-full w-full rounded-xl"),
+              { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
+            ]}
+          />
+
+          {/* INFO */}
+          <View
+            style={[
+              tw("absolute bg-transparent w-full px-6 py-2 z-10"),
+              ,
+              { bottom: 80 },
+            ]}
+          >
+            {/* Main InFO */}
+            <View style={tw("mb-2")}>
+              <Text style={tw("text-3xl font-bold text-white")}>
+                {tinderer.fullName}{" "}
+                <Text style={tw("text-xl font-light")}>
+                  {tinderer.age}
+                </Text>
+              </Text>
+              <Text style={tw("text-white")}>{tinderer.occupation}</Text>
+              <View style={tw("flex-row w-5/6 flex-wrap")}>
+                {tinderer?.tags?.map((tag, index) => (
+                  <Text
+                    key={index}
+                    style={[
+                      tw("text-white px-3 py-2 rounded-2xl"),
+                      styles.opacitybackground,
+                    ]}
+                  >
+                    {tag}
+                  </Text>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {/* Overlay label */}
+          <View style={tw("relative items-center w-full")}>
+            <Text
+              ref={(el) => (matchref.current[index] = el)}
+              style={[
+                tw(
+                  "absolute top-11 left-2 text-3xl font-bold opacity-0 px-3 py-3 text-center"
+                ),
+                styles.greenBorder,
+                {
+                  borderWidth: 5,
+                  textAlignVertical: "center",
+                  color: "rgb(40, 223, 174)",
+                  transform: [{ rotateZ: "-45deg" }],
+                },
+              ]}
+            >
+              MATCH
+            </Text>
+            <Text
+              ref={(el) => (noperef.current[index] = el)}
+              style={[
+                tw(
+                  "absolute text-3xl top-11 right-3 font-bold opacity-0 px-3 py-3 text-center"
+                ),
+                styles.roseBorder,
+                {
+                  borderWidth: 5,
+                  textAlignVertical: "center",
+                  color: "rgba(232, 40, 95, 1)",
+                  transform: [{ rotateZ: "45deg" }],
+                },
+              ]}
+            >
+              NOPE
+            </Text>
+          </View>
+
+          {/* Card dark background at the bottom*/}
+          <LinearGradient
+            style={{
+              height: 80,
+              width: "100%",
+              position: "absolute",
+              bottom: 0,
+            }}
+            colors={["rgba(0,0,0,1)", "rgba(1,5,13,1)"]}
+          ></LinearGradient>
+          <LinearGradient
+            style={{
+              height: 80,
+              width: "100%",
+              position: "absolute",
+              bottom: 80,
+            }}
+            colors={["rgba(0,0,0,0)", "rgba(1,5,13,1)"]}
+          ></LinearGradient>
+        </View>
+      </TinderCard>
+    </View>
+  ));
+
+
   return (
     <View style={tw("flex-1 relative")}>
       {/* HEADER */}
@@ -191,138 +333,17 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
       </View>
       {/* DECK */}
-      
-      <View style={tw("relative mt-1 w-full flex-1")} pointerEvents= {canSwipe ? "auto" : "none"}>
+
+      <View
+        style={tw("relative mt-1 w-full flex-1")}
+        pointerEvents={canSwipe ? "auto" : "none"}
+      >
         {/* Mapping for card */}
-        {tinderers.map((tinderer, index) => (
-          <View style={tw("absolute w-full h-full")} key={index}>
-            <TinderCard
-              onSwipeRequirementFulfilled={(direction) =>
-                onSwipeRequirementFulfilled(index, direction)
-              }
-              onSwipeRequirementUnfulfilled={() =>
-                onSwipeRequirementUnfulfilled(index)
-              }
-              onCardLeftScreen={() => onCardLeftScreen()}
-              flickOnSwipe={true}
-              preventSwipe={["up", "down"]}
-              swipeRequirementType="position"
-              swipeThreshold={100}
-              onSwipe={() => setcanSwipe(false)}
-              ref={(el) => (cardref.current[index] = el)}
-
-              // style={tw("flex-1 items-center content-center flex")}
-            >
-              <View
-                style={[
-                  tw(
-                    "w-full self-center h-full items-center flex rounded-xl relative"
-                  ),
-                  { paddingBottom: 80 },
-                ]}
-              >
-                <Image
-                  source={{ uri: tinderer.photoURL }}
-                  style={[
-                    tw("absolute top-0 h-full w-full rounded-xl"),
-                    { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
-                  ]}
-                />
-
-                {/* INFO */}
-                <View
-                  style={[
-                    tw("absolute bg-transparent w-full px-6 py-2 z-10"),
-                    ,
-                    { bottom: 80 },
-                  ]}
-                >
-                  {/* Main InFO */}
-                  <View style={tw("mb-2")}>
-                    <Text style={tw("text-3xl font-bold text-white")}>
-                      {tinderer.fullName}{" "}
-                      <Text style={tw("text-xl font-light")}>
-                        {tinderer.age}
-                      </Text>
-                    </Text>
-                    <Text style={tw("text-white")}>{tinderer.occupation}</Text>
-                    <View style={tw("flex-row w-5/6 flex-wrap")}>
-                      {tinderer.tags.map((tag, index) => (
-                        <Text
-                          key={index}
-                          style={[
-                            tw("text-white px-3 py-2 rounded-2xl"),
-                            styles.opacitybackground,
-                          ]}
-                        >
-                          {tag}
-                        </Text>
-                      ))}
-                    </View>
-                  </View>
-                </View>
-
-                {/* Overlay label */}
-                <View style={tw("relative items-center w-full")}>
-                  <Text
-                    ref={(el) => (matchref.current[index] = el)}
-                    style={[
-                      tw(
-                        "absolute top-11 left-2 text-3xl font-bold opacity-0 px-3 py-3 text-center"
-                      ),
-                      styles.greenBorder,
-                      {
-                        borderWidth: 5,
-                        textAlignVertical: "center",
-                        color: "rgb(40, 223, 174)",
-                        transform: [{ rotateZ: "-45deg" }],
-                      },
-                    ]}
-                  >
-                    MATCH
-                  </Text>
-                  <Text
-                    ref={(el) => (noperef.current[index] = el)}
-                    style={[
-                      tw(
-                        "absolute text-3xl top-11 right-3 font-bold opacity-0 px-3 py-3 text-center"
-                      ),
-                      styles.roseBorder,
-                      {
-                        borderWidth: 5,
-                        textAlignVertical: "center",
-                        color: "rgba(232, 40, 95, 1)",
-                        transform: [{ rotateZ: "45deg" }],
-                      },
-                    ]}
-                  >
-                    NOPE
-                  </Text>
-                </View>
-
-                {/* Card dark background at the bottom*/}
-                <LinearGradient
-                  style={{
-                    height: 80,
-                    width: "100%",
-                    position: "absolute",
-                    bottom: 0,
-                  }}
-                  colors={["rgba(0,0,0,1)", "rgba(1,5,13,1)"]}
-                ></LinearGradient>
-                <LinearGradient
-                  style={{
-                    height: 80,
-                    width: "100%",
-                    position: "absolute",
-                    bottom: 80,
-                  }}
-                  colors={["rgba(0,0,0,0)", "rgba(1,5,13,1)"]}
-                ></LinearGradient>
-              </View>
-            </TinderCard>
-          </View>
-        ))}
+        <View style={tw(" w-full h-full justify-center items-center")} >
+          <Image style = {tw("h-20 w-20 mb-5")} source = {{uri : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEayg_1RdFOpaXVnJE57TD3jkEqQ2KFCZ5ZQ&usqp=CAU"}}/>
+          <Text style = {tw("text-2xl font-bold")}>No more profiles</Text>
+        </View>
+        {Cards} 
         {/* Controls section has transparent background*/}
         <View
           style={tw(
