@@ -52,14 +52,14 @@ export const UserInfoProvider = ({ children }) => {
         .collection('users')
         .doc(user?.uid)
         .onSnapshot(documentSnapshot => {
-          setUserInfo(documentSnapshot.data());
+          setUserInfo({
+            ...documentSnapshot.data(),
+            id: documentSnapshot.id,
+          });
         });
         return unsubscribe;
-    }, []);
+    }, [user]);//
 
-    useEffect(() => {
-        console.log("user: ",user);
-    }, [user])
 
 
     return (

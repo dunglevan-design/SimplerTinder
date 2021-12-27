@@ -1,22 +1,37 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   TextInput,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import tw from "tailwind-rn";
 import ProfileHeader from "../components/ProfileHeader";
 import { useUserInfo } from "../hooks/useUserInfo";
-import firestore from '@react-native-firebase/firestore';
+import firestore from "@react-native-firebase/firestore";
 
 const Dictionary = {
   fullName: "fullName",
 };
 const ModalScreen = ({ navigation }) => {
   const { userInfo } = useUserInfo();
+
+  const [userInfoState, setuserInfoState] = useState({
+    fullName: "",
+    age: 0,
+    occupation: "",
+    photoURL: "",
+  });
+
+  useEffect(() => {
+    setuserInfoState({
+      ...userInfo,
+    });
+  }, []);
+  
   useEffect(() => {
     navigation.setOptions({
       animation: "slide_from_right",
@@ -25,33 +40,30 @@ const ModalScreen = ({ navigation }) => {
   }, []);
 
   const SaveUserInfo = () => {
+    console.log(">>>>>>>>>>> :", userInfoState);
     firestore()
-    .collection('users').doc(userInfo.id.toString())
-    .set({
-      name: userInfo.fullName,
-      age: userInfo.age,
-      occupation: userInfo.occupation,
-    })
-    .then(() => {
-      console.log('User added!');
-    });
-  }
+      .collection("users")
+      .doc(userInfo.id.toString())
+      .set({
+        fullName: userInfoState.fullName,
+        age: userInfoState.age,
+        occupation: userInfoState.occupation,
+        photoURL: userInfoState.photoURL,
+      })
+      .then(() => {
+          Alert.alert("WorseTinder", "User data has been saved successfully");
+      });
+  };
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ScrollView>
         <ProfileHeader />
 
-        <InfoForm
-          userInfo={userInfo}
-          type="fullName"
-        />
-        <InfoForm
-          userInfo={userInfo}
-          type="occupation"
-        />
-        <InfoForm userInfo={userInfo} type="age" />
-        <InfoForm userInfo={userInfo} type="photoURL" />
+        <InfoForm userInfo={userInfoState} setuserInfoState = {setuserInfoState} type="fullName" />
+        <InfoForm userInfo={userInfoState} setuserInfoState = {setuserInfoState} type="occupation" />
+        <InfoForm userInfo={userInfoState} setuserInfoState = {setuserInfoState} type="age" />
+        <InfoForm userInfo={userInfoState} setuserInfoState = {setuserInfoState} type="photoURL" />
 
         <View style={tw("w-full justify-center items-center mt-6 mb-6")}>
           <TouchableOpacity
@@ -69,18 +81,29 @@ const ModalScreen = ({ navigation }) => {
   );
 };
 
-const InfoForm = ({ userInfo,  type }) => {
+const InfoForm = ({ userInfo, type, setuserInfoState }) => {
+
   const setUserInfoBasedOntype = (userinfo, text, type) => {
     if (type === "fullName") {
+      setuserInfoState({
+        ...userinfo,
+        fullName: text,
+      });
     } else if (type === "age") {
-    }
-    else if (type === "occupation"){
-    }
-    else if (type === "photoURL"){
-        // setUserInfo({
-        //     ...userinfo,
-        //     photoURL: text,
-        // })
+      setuserInfoState({
+        ...userinfo,
+        age: text,
+      });
+    } else if (type === "occupation") {
+      setuserInfoState({
+        ...userinfo,
+        occupation: text,
+      });
+    } else if (type === "photoURL") {
+      setuserInfoState({
+        ...userinfo,
+        photoURL: text,
+      });
     }
   };
 
@@ -91,10 +114,9 @@ const InfoForm = ({ userInfo,  type }) => {
     } else if (type === "occupation") {
       value = userInfo?.occupation;
     } else if (type === "age") {
-      value = userInfo?.age.toString();
-    }
-    else if (type === "photoURL"){
-        value = userInfo?.photoURL;
+      value = userInfo?.age?.toString();
+    } else if (type === "photoURL") {
+      value = userInfo?.photoURL;
     }
 
     //   else if (type === "tags"){

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -11,11 +11,11 @@ import useAuth from "../hooks/useAuth";
 import TinderCard from "react-tinder-card";
 import { AntDesign, Entypo, Ionicons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from "expo-linear-gradient";
+import firestore from "@react-native-firebase/firestore";
 
 import tw from "tailwind-rn";
 import { useUserInfo } from "../hooks/useUserInfo";
-
 
 const DUMMY_DATA = [
   {
@@ -56,10 +56,22 @@ export default function HomeScreen({ navigation }) {
   const [currentIndex, setcurrentIndex] = useState(0);
   const currentIndexRef = useRef(0);
   currentIndexRef.current = currentIndex;
-  const tinderers = DUMMY_DATA;
+  const [tinderers, setTinderers] = useState([]);
+
+  const [canSwipe, setcanSwipe] = useState(true);
+  // const [canUndo]
+
+  const NumberofRender = useRef(0);
+
+  useEffect(() => {
+    console.log("render time: ", NumberofRender.current, ": ", currentIndex);
+    NumberofRender.current += 1;
+  });
+
   const onSwipeRequirementFulfilled = (index, direction) => {
     console.log("You swiped: " + direction);
     console.log("You swiped: " + index);
+    setcanSwipe(false);
     if (direction === "right") {
       noperef.current[index].setNativeProps({
         style: {
@@ -88,13 +100,29 @@ export default function HomeScreen({ navigation }) {
   };
 
   useEffect(() => {
+    const subscriber = firestore()
+      .collection("users")
+      .onSnapshot((snapshot) => {
+        setcurrentIndex(snapshot.docs.length - 1);
+        setTinderers(
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+        );
+      });
+
+    return subscriber;
+  }, []);
+
+  useEffect(() => {
     navigation.setOptions({
       animation: "slide_from_right",
-    })
-  }, [])
-
+    });
+  }, []);
 
   const onSwipeRequirementUnfulfilled = (index) => {
+    setcanSwipe(true);
     console.log("unfullfill ", index);
     noperef.current[index].setNativeProps({
       style: {
@@ -109,31 +137,23 @@ export default function HomeScreen({ navigation }) {
   };
 
   const Swipe = (direction) => {
-    console.log("swiping " , direction, currentIndex);
+    console.log("swiping ", direction, currentIndex);
     cardref.current[currentIndex].swipe(direction);
-    setcurrentIndex(currentIndex - 1);
   };
 
   const canUndo = () => {
     return currentIndex < tinderers.length - 1;
-  }
+  };
 
-  const SwipeUndo = async() => {
+  const SwipeUndo = async () => {
     console.log("undoing swipe", currentIndex);
-    if (canUndo())
-    {
+    if (canUndo()) {
       setcurrentIndex(currentIndex + 1);
       await cardref.current[currentIndex + 1].restoreCard();
-    }
-    else {
+    } else {
       console.log("cant undo");
     }
-  }
-  useEffect(() => {
-    // Get data
-    //initialise state
-    setcurrentIndex(tinderers.length - 1);
-  }, []);
+  };
 
   useEffect(() => {
     matchref.current = matchref.current.slice(0, tinderers.length);
@@ -144,10 +164,16 @@ export default function HomeScreen({ navigation }) {
     console.log("left screen", currentIndexRef.current);
     setcurrentIndex(currentIndexRef.current - 1);
   };
+
+  useEffect(() => {
+    setcanSwipe(true);
+  }, [currentIndex]);
   return (
     <View style={tw("flex-1 relative")}>
       {/* HEADER */}
-      <View style={tw("items-center flex-row justify-between px-5 z-20 bg-white")}>
+      <View
+        style={tw("items-center flex-row justify-between px-5 z-20 bg-white")}
+      >
         <TouchableOpacity onPress={logout}>
           <Image
             style={[tw("h-10 w-10 rounded-full")]}
@@ -164,9 +190,9 @@ export default function HomeScreen({ navigation }) {
           <Ionicons name="chatbubbles-sharp" size={40} color="#ff5868" />
         </TouchableOpacity>
       </View>
-
       {/* DECK */}
-      <View style={tw("relative mt-1 w-full flex-1")}>
+      
+      <View style={tw("relative mt-1 w-full flex-1")} pointerEvents= {canSwipe ? "auto" : "none"}>
         {/* Mapping for card */}
         {tinderers.map((tinderer, index) => (
           <View style={tw("absolute w-full h-full")} key={index}>
@@ -178,30 +204,38 @@ export default function HomeScreen({ navigation }) {
                 onSwipeRequirementUnfulfilled(index)
               }
               onCardLeftScreen={() => onCardLeftScreen()}
+              flickOnSwipe={true}
               preventSwipe={["up", "down"]}
               swipeRequirementType="position"
               swipeThreshold={100}
+              onSwipe={() => setcanSwipe(false)}
               ref={(el) => (cardref.current[index] = el)}
-              
+
               // style={tw("flex-1 items-center content-center flex")}
             >
               <View
-                style={[tw(
-                  "w-full self-center h-full items-center flex rounded-xl relative"
-                ), {paddingBottom: 80}]}
+                style={[
+                  tw(
+                    "w-full self-center h-full items-center flex rounded-xl relative"
+                  ),
+                  { paddingBottom: 80 },
+                ]}
               >
                 <Image
                   source={{ uri: tinderer.photoURL }}
-                  style={[tw("absolute top-0 h-full w-full rounded-xl"), {borderBottomLeftRadius: 0, borderBottomRightRadius: 0}]}
+                  style={[
+                    tw("absolute top-0 h-full w-full rounded-xl"),
+                    { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
+                  ]}
                 />
 
                 {/* INFO */}
                 <View
                   style={[
-                    tw(
-                      "absolute bg-transparent w-full px-6 py-2 z-10"
-                    ),
-                  , {bottom: 80}]}
+                    tw("absolute bg-transparent w-full px-6 py-2 z-10"),
+                    ,
+                    { bottom: 80 },
+                  ]}
                 >
                   {/* Main InFO */}
                   <View style={tw("mb-2")}>
@@ -212,11 +246,7 @@ export default function HomeScreen({ navigation }) {
                       </Text>
                     </Text>
                     <Text style={tw("text-white")}>{tinderer.occupation}</Text>
-                    <View
-                      style={tw(
-                        "flex-row w-5/6 flex-wrap"
-                      )}
-                    >
+                    <View style={tw("flex-row w-5/6 flex-wrap")}>
                       {tinderer.tags.map((tag, index) => (
                         <Text
                           key={index}
@@ -271,18 +301,33 @@ export default function HomeScreen({ navigation }) {
                 </View>
 
                 {/* Card dark background at the bottom*/}
-                <LinearGradient style= {{height: 80, width: "100%"  , position: "absolute" , bottom: 0}} colors={["rgba(0,0,0,1)" , "rgba(1,5,13,1)" ]}>
-                </LinearGradient>
-                <LinearGradient style= {{height: 80, width: "100%"  , position: "absolute" , bottom: 80}} colors={["rgba(0,0,0,0)" , "rgba(1,5,13,1)" ]}>
-                </LinearGradient>
-                
+                <LinearGradient
+                  style={{
+                    height: 80,
+                    width: "100%",
+                    position: "absolute",
+                    bottom: 0,
+                  }}
+                  colors={["rgba(0,0,0,1)", "rgba(1,5,13,1)"]}
+                ></LinearGradient>
+                <LinearGradient
+                  style={{
+                    height: 80,
+                    width: "100%",
+                    position: "absolute",
+                    bottom: 80,
+                  }}
+                  colors={["rgba(0,0,0,0)", "rgba(1,5,13,1)"]}
+                ></LinearGradient>
               </View>
             </TinderCard>
           </View>
         ))}
         {/* Controls section has transparent background*/}
         <View
-          style={tw("absolute bottom-2 z-10 w-full flex flex-row justify-evenly items-center")}
+          style={tw(
+            "absolute bottom-2 z-10 w-full flex flex-row justify-evenly items-center"
+          )}
         >
           <TouchableOpacity
             onPress={() => Swipe("left")}
