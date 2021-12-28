@@ -18,38 +18,9 @@ import firestore from "@react-native-firebase/firestore";
 import tw from "tailwind-rn";
 import { useUserInfo } from "../hooks/useUserInfo";
 
-const DUMMY_DATA = [
-  {
-    fullName: "Elon Musk",
-    occupation: "software engineer",
-    photoURL:
-      "https://upload.wikimedia.org/wikipedia/commons/8/85/Elon_Musk_Royal_Society_%28crop1%29.jpg",
-    age: 45,
-    id: 123,
-    tags: ["Nooby", "Hailer", "Stripper", "CEO", "Nothing at all"],
-  },
-  {
-    fullName: "alane Mulan",
-    occupation: "software engineer",
-    photoURL:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTh5mmILTkRwAc266VWD17KfsQL9nk1RuYjEyN9WMzkmOaJxYhq8hIJn5edKcYoEk80VPI&usqp=CAU",
-    age: 35,
-    id: 456,
-    tags: ["guitarist", "randomshit", "lover", "flirter"],
-  },
-  {
-    fullName: "Jun Le",
-    occupation: "software engineer boss",
-    photoURL:
-      "https://scontent.fhan2-4.fna.fbcdn.net/v/t1.6435-9/60045428_1180040428834922_7963564425636478976_n.jpg?_nc_cat=105&ccb=1-5&_nc_sid=09cbfe&_nc_ohc=3MRSMXBrGNEAX8EBP19&_nc_ht=scontent.fhan2-4.fna&oh=3f23c56b7d613e36f1145e5051276e4d&oe=61CC248B",
-    age: 20,
-    id: 789,
-    tags: ["handsome", "chaser", "solver", "football"],
-  },
-];
-
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
+  const {userInfo} = useUserInfo();
   const matchref = useRef([]);
   const noperef = useRef([]);
   const cardref = useRef([]);
@@ -103,9 +74,29 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     const subscriber = firestore()
       .collection("users")
-      .onSnapshot((snapshot) => {
+      .onSnapshot(async (snapshot) => {
+        const swipedProfiles = await firestore()
+          .collection("users")
+          .doc(user.uid)
+          .collection("swipedProfiles")
+          .get();
+        const swipedProfilesId = swipedProfiles.docs.map(
+          (profile) => profile.id
+        );
+        const passesProfiles = await firestore()
+          .collection("users")
+          .doc(user.uid)
+          .collection("passesProfiles")
+          .get();
+        const passesProfilesId = passesProfiles.docs.map(
+          (profile) => profile.id
+        );
+
         const filteredSnapshot = snapshot.docs.filter(
-          (doc) => doc.id !== user.uid
+          (doc) =>
+            doc.id !== user.uid &&
+            !swipedProfilesId.includes(doc.id) &&
+            !passesProfilesId.includes(doc.id)
         );
         setcurrentIndex(filteredSnapshot.length - 1);
         setTinderers(
@@ -142,10 +133,9 @@ export default function HomeScreen({ navigation }) {
 
   const Swipe = (direction) => {
     console.log("swiping ", direction, currentIndex);
-    if(currentIndex < 0){
-      Alert.alert("Worse Tinder", "No more profiles, go get a life")
-    }
-    else {
+    if (currentIndex < 0) {
+      Alert.alert("Worse Tinder", "No more profiles, go get a life");
+    } else {
       cardref.current[currentIndex].swipe(direction);
     }
   };
@@ -169,15 +159,71 @@ export default function HomeScreen({ navigation }) {
     noperef.current = noperef.current.slice(0, tinderers.length);
   }, [tinderers]);
 
-  const onCardLeftScreen = () => {
+  const onCardLeftScreen = async (direction) => {
     console.log("left screen", currentIndexRef.current);
+    const currentCard = tinderers[currentIndexRef.current];
     setcurrentIndex(currentIndexRef.current - 1);
+    // Add swipe profiles to firebase
+    if (direction === "left") {
+      //NOPE
+      try {
+        const result = await firestore()
+          .collection("users")
+          .doc(user.uid)
+          .collection("swipedProfiles")
+          .doc(currentCard.id)
+          .set(currentCard);
+        console.log(result);
+      } catch (error) {
+        Alert.alert("worseTinder", error);
+      }
+    } else if (direction === "right") {
+      //PASSES
+      try {
+        firestore()
+          .collection("users")
+          .doc(user.uid)
+          .collection("passesProfiles")
+          .doc(currentCard.id)
+          .set(currentCard);
+      } catch (error) {
+        Alert.alert("worseTinder", error);
+      }
+
+      //checking if the person passes you already
+      //YES: Create a match, navigate match modal
+
+      if (
+        (
+          await firestore()
+            .collection("users")
+            .doc(currentCard.id)
+            .collection("passesProfiles")
+            .doc(user.uid)
+            .get()
+        ).exists
+      ) {
+        //Create a match
+        try {
+          firestore().collection("match").add({
+            matchProfile1: userInfo,
+            matchProfile2: currentCard,
+            matchIDs: [userInfo.id, currentCard.id],
+          });
+        } catch (error) {
+          Alert.alert(error);
+        }
+        navigation.navigate("Match", {
+          userInfo,
+          currentCard,
+        });
+      }
+    }
   };
 
   useEffect(() => {
     setcanSwipe(true);
   }, [currentIndex]);
-
 
   const Cards = tinderers.map((tinderer, index) => (
     <View style={tw("absolute w-full h-full")} key={index}>
@@ -188,7 +234,7 @@ export default function HomeScreen({ navigation }) {
         onSwipeRequirementUnfulfilled={() =>
           onSwipeRequirementUnfulfilled(index)
         }
-        onCardLeftScreen={() => onCardLeftScreen()}
+        onCardLeftScreen={(direction) => onCardLeftScreen(direction)}
         flickOnSwipe={true}
         preventSwipe={["up", "down"]}
         swipeRequirementType="position"
@@ -226,9 +272,7 @@ export default function HomeScreen({ navigation }) {
             <View style={tw("mb-2")}>
               <Text style={tw("text-3xl font-bold text-white")}>
                 {tinderer.fullName}{" "}
-                <Text style={tw("text-xl font-light")}>
-                  {tinderer.age}
-                </Text>
+                <Text style={tw("text-xl font-light")}>{tinderer.age}</Text>
               </Text>
               <Text style={tw("text-white")}>{tinderer.occupation}</Text>
               <View style={tw("flex-row w-5/6 flex-wrap")}>
@@ -309,7 +353,6 @@ export default function HomeScreen({ navigation }) {
     </View>
   ));
 
-
   return (
     <View style={tw("flex-1 relative")}>
       {/* HEADER */}
@@ -339,11 +382,16 @@ export default function HomeScreen({ navigation }) {
         pointerEvents={canSwipe ? "auto" : "none"}
       >
         {/* Mapping for card */}
-        <View style={tw(" w-full h-full justify-center items-center")} >
-          <Image style = {tw("h-20 w-20 mb-5")} source = {{uri : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEayg_1RdFOpaXVnJE57TD3jkEqQ2KFCZ5ZQ&usqp=CAU"}}/>
-          <Text style = {tw("text-2xl font-bold")}>No more profiles</Text>
+        <View style={tw(" w-full h-full justify-center items-center")}>
+          <Image
+            style={tw("h-20 w-20 mb-5")}
+            source={{
+              uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEayg_1RdFOpaXVnJE57TD3jkEqQ2KFCZ5ZQ&usqp=CAU",
+            }}
+          />
+          <Text style={tw("text-2xl font-bold")}>No more profiles</Text>
         </View>
-        {Cards} 
+        {Cards}
         {/* Controls section has transparent background*/}
         <View
           style={tw(
