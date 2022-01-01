@@ -1,16 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import {
-  GiftedChat,
-  MessageImageProps,
-  MessageImage,
-  ActionsProps,
-  Actions,
-  Bubble,
-} from "react-native-gifted-chat";
 import tw from "tailwind-rn";
 import firestore from "@react-native-firebase/firestore";
-import { Ionicons } from "@expo/vector-icons";
 import { useUserInfo } from "../hooks/useUserInfo";
 import ChatHeader from "../components/ChatHeader";
 
@@ -37,7 +28,7 @@ const ChatScreen = ({ navigation }) => {
 
   return (
     <>
-      <ChatHeader  navigation= {navigation} title="Chat" callEnabled={false} />
+      <ChatHeader  navigation= {navigation} title="Chat" callEnabled={false} whiteBackground={false} />
 
       <View style={tw("flex-1 px-2")}>
         {rooms.map((room, index) => (

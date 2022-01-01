@@ -8,9 +8,9 @@ type props = {
   title: string;
   callEnabled: boolean;
 };
-const ChatHeader = ({ title, callEnabled, navigation }) => {
+const ChatHeader = ({ title, callEnabled, navigation, whiteBackground}) => {
   return (
-    <View style={tw("relative w-full items-center py-4 flex-row px-5")}>
+    <View style={[tw("relative w-full items-center py-4 flex-row px-5"), {backgroundColor: whiteBackground ? "#fff" : "rgba(0,0,0,0)"}]}>
       <TouchableOpacity onPress={() => navigation.goBack()}>
         <Octicons name="chevron-left" size={36} color="rgba(232, 40, 95, 1)" />
       </TouchableOpacity>

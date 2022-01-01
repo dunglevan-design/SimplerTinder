@@ -1,6 +1,5 @@
-import { useRoute } from "@react-navigation/native";
 import React from "react";
-import { View, Text, TextInput, Image, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity } from "react-native";
 import tw from "tailwind-rn";
 
 const MatchScreen = ({ route, navigation }) => {

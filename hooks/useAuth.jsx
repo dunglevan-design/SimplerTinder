@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId:
       "117054791856-15itt386dr3tjtt6epaetj5oh07af474.apps.googleusercontent.com",
+    webClientId: "117054791856-fbt33eef89m84h1d56f0u0qgdf2u3fer.apps.googleusercontent.com",
   });
 
   const SignInWithGoogle = async () => {

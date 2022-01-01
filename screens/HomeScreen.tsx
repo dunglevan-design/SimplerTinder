@@ -1,26 +1,24 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   Image,
   StyleSheet,
-  Button,
   Alert,
+  Animated,
 } from "react-native";
 import useAuth from "../hooks/useAuth";
-import TinderCard from "react-tinder-card";
 import { AntDesign, Entypo, Ionicons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import firestore from "@react-native-firebase/firestore";
-
 import tw from "tailwind-rn";
 import { useUserInfo } from "../hooks/useUserInfo";
+import TinderCard from "../components/TinderCard";
 
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
-  const {userInfo} = useUserInfo();
+  const { userInfo } = useUserInfo();
   const matchref = useRef([]);
   const noperef = useRef([]);
   const cardref = useRef([]);
@@ -31,6 +29,7 @@ export default function HomeScreen({ navigation }) {
   const [tinderers, setTinderers] = useState([]);
 
   const [canSwipe, setcanSwipe] = useState(true);
+
   // const [canUndo]
 
   const NumberofRender = useRef(0);
@@ -205,11 +204,13 @@ export default function HomeScreen({ navigation }) {
       ) {
         //Create a match
         try {
-          firestore().collection("match").add({
-            matchProfile1: userInfo,
-            matchProfile2: currentCard,
-            matchIDs: [userInfo.id, currentCard.id],
-          });
+          firestore()
+            .collection("match")
+            .add({
+              matchProfile1: userInfo,
+              matchProfile2: currentCard,
+              matchIDs: [userInfo.id, currentCard.id],
+            });
         } catch (error) {
           Alert.alert(error);
         }
@@ -226,135 +227,22 @@ export default function HomeScreen({ navigation }) {
   }, [currentIndex]);
 
   const Cards = tinderers.map((tinderer, index) => (
-    <View style={tw("absolute w-full h-full")} key={index}>
-      <TinderCard
-        onSwipeRequirementFulfilled={(direction) =>
-          onSwipeRequirementFulfilled(index, direction)
-        }
-        onSwipeRequirementUnfulfilled={() =>
-          onSwipeRequirementUnfulfilled(index)
-        }
-        onCardLeftScreen={(direction) => onCardLeftScreen(direction)}
-        flickOnSwipe={true}
-        preventSwipe={["up", "down"]}
-        swipeRequirementType="position"
-        swipeThreshold={100}
-        onSwipe={() => setcanSwipe(false)}
-        ref={(el) => (cardref.current[index] = el)}
-
-        // style={tw("flex-1 items-center content-center flex")}
-      >
-        <View
-          style={[
-            tw(
-              "w-full self-center h-full items-center flex rounded-xl relative"
-            ),
-            { paddingBottom: 80 },
-          ]}
-        >
-          <Image
-            source={{ uri: tinderer.photoURL }}
-            style={[
-              tw("absolute top-0 h-full w-full rounded-xl"),
-              { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
-            ]}
-          />
-
-          {/* INFO */}
-          <View
-            style={[
-              tw("absolute bg-transparent w-full px-6 py-2 z-10"),
-              ,
-              { bottom: 80 },
-            ]}
-          >
-            {/* Main InFO */}
-            <View style={tw("mb-2")}>
-              <Text style={tw("text-3xl font-bold text-white")}>
-                {tinderer.fullName}{" "}
-                <Text style={tw("text-xl font-light")}>{tinderer.age}</Text>
-              </Text>
-              <Text style={tw("text-white")}>{tinderer.occupation}</Text>
-              <View style={tw("flex-row w-5/6 flex-wrap")}>
-                {tinderer?.tags?.map((tag, index) => (
-                  <Text
-                    key={index}
-                    style={[
-                      tw("text-white px-3 py-2 rounded-2xl"),
-                      styles.opacitybackground,
-                    ]}
-                  >
-                    {tag}
-                  </Text>
-                ))}
-              </View>
-            </View>
-          </View>
-
-          {/* Overlay label */}
-          <View style={tw("relative items-center w-full")}>
-            <Text
-              ref={(el) => (matchref.current[index] = el)}
-              style={[
-                tw(
-                  "absolute top-11 left-2 text-3xl font-bold opacity-0 px-3 py-3 text-center"
-                ),
-                styles.greenBorder,
-                {
-                  borderWidth: 5,
-                  textAlignVertical: "center",
-                  color: "rgb(40, 223, 174)",
-                  transform: [{ rotateZ: "-45deg" }],
-                },
-              ]}
-            >
-              MATCH
-            </Text>
-            <Text
-              ref={(el) => (noperef.current[index] = el)}
-              style={[
-                tw(
-                  "absolute text-3xl top-11 right-3 font-bold opacity-0 px-3 py-3 text-center"
-                ),
-                styles.roseBorder,
-                {
-                  borderWidth: 5,
-                  textAlignVertical: "center",
-                  color: "rgba(232, 40, 95, 1)",
-                  transform: [{ rotateZ: "45deg" }],
-                },
-              ]}
-            >
-              NOPE
-            </Text>
-          </View>
-
-          {/* Card dark background at the bottom*/}
-          <LinearGradient
-            style={{
-              height: 80,
-              width: "100%",
-              position: "absolute",
-              bottom: 0,
-            }}
-            colors={["rgba(0,0,0,1)", "rgba(1,5,13,1)"]}
-          ></LinearGradient>
-          <LinearGradient
-            style={{
-              height: 80,
-              width: "100%",
-              position: "absolute",
-              bottom: 80,
-            }}
-            colors={["rgba(0,0,0,0)", "rgba(1,5,13,1)"]}
-          ></LinearGradient>
-        </View>
-      </TinderCard>
-    </View>
+    <TinderCard
+      key={index}
+      tinderer={tinderer}
+      index={index}
+      onSwipeRequirementFulfilled={onSwipeRequirementFulfilled}
+      onSwipeRequirementUnfulfilled={onSwipeRequirementUnfulfilled}
+      onCardLeftScreen={onCardLeftScreen}
+      setcanSwipe={setcanSwipe}
+      cardref={cardref}
+      matchref={matchref}
+      noperef={noperef}
+    />
   ));
 
   return (
-    <View style={tw("flex-1 relative")}>
+    <View style={tw("flex-1 relative bg-black")}>
       {/* HEADER */}
       <View
         style={tw("items-center flex-row justify-between px-5 z-20 bg-white")}
@@ -362,7 +250,7 @@ export default function HomeScreen({ navigation }) {
         <TouchableOpacity onPress={logout}>
           <Image
             style={[tw("h-10 w-10 rounded-full")]}
-            source={{ uri: user?.photoURL }}
+            source={{ uri: userInfo?.photoURL }}
           />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
@@ -384,15 +272,16 @@ export default function HomeScreen({ navigation }) {
         {/* Mapping for card */}
         <View style={tw(" w-full h-full justify-center items-center")}>
           <Image
-            style={tw("h-20 w-20 mb-5")}
+            style={tw("h-40 w-40 mb-5")}
             source={{
-              uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQEayg_1RdFOpaXVnJE57TD3jkEqQ2KFCZ5ZQ&usqp=CAU",
+              uri: "https://images.pond5.com/animated-sad-emoji-isolated-black-footage-149978354_iconl.jpeg",
             }}
           />
-          <Text style={tw("text-2xl font-bold")}>No more profiles</Text>
+          <Text style={tw("text-2xl font-bold text-white")}>No more profiles</Text>
         </View>
         {Cards}
         {/* Controls section has transparent background*/}
+
         <View
           style={tw(
             "absolute bottom-2 z-10 w-full flex flex-row justify-evenly items-center"
@@ -407,6 +296,24 @@ export default function HomeScreen({ navigation }) {
           >
             <Entypo name="cross" size={48} color="rgba(232, 40, 95, 1)" />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              if (currentIndex >= 0)
+                navigation.navigate("TindererProfile", {
+                  tinderer: tinderers[currentIndex],
+                });
+            }}
+            style={[
+              tw(
+                "justify-center items-center rounded-full border-white bg-white border-2 p-1"
+              ),
+              { zIndex: 100, top: 0 },
+            ]}
+          >
+            <AntDesign name="info" size={24} color="black" />
+          </TouchableOpacity>
+
           <TouchableOpacity
             onPress={() => SwipeUndo()}
             style={[
@@ -415,6 +322,16 @@ export default function HomeScreen({ navigation }) {
             ]}
           >
             <FontAwesome5 name="undo" size={20} color="rgb(252, 204, 82)" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => console.log("pressed in")}
+            style={[
+              tw("justify-center items-center rounded-full border-2 p-1"),
+              { zIndex: 100, top: 0, borderColor: "#ba53f4" },
+            ]}
+          >
+            <Ionicons name="flash" size={24} color="#ba53f4" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -432,7 +349,7 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   opacitybackground: {
     backgroundColor: "rgba(0,0,0,0.3)",
   },

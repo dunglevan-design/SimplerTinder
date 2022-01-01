@@ -77,7 +77,7 @@ export function Chatroom({ route, navigation }) {
 
   return (
     <>
-      <ChatHeader title={OtherProfile.fullName} callEnabled={true} navigation={navigation}/> 
+      <ChatHeader title={OtherProfile.fullName} callEnabled={true} navigation={navigation} whiteBackground={false}/> 
       <GiftedChat
         messages={messages}
         onSend={(messages) => onSend(messages)}
