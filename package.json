@@ -23,6 +23,7 @@
     "@react-navigation/stack": "^6.0.11",
     "expo": "~44.0.0",
     "expo-auth-session": "~3.5.0",
+    "expo-av": "~10.2.0",
     "expo-image-picker": "~12.0.1",
     "expo-linear-gradient": "~11.0.0",
     "expo-random": "~12.1.1",
@@ -32,6 +33,7 @@
     "react": "17.0.1",
     "react-dom": "17.0.1",
     "react-native": "0.64.3",
+    "react-native-animated-loader": "^0.0.9",
     "react-native-gallery": "^0.0.17",
     "react-native-gesture-handler": "^2.1.0",
     "react-native-gifted-chat": "^0.16.3",
@@ -52,7 +54,7 @@
     "react-tinder-card": "^1.4.5",
     "tailwind-rn": "^3.0.1",
     "uid": "^2.0.0",
-    "expo-av": "~10.2.0"
+    "lottie-react-native": "5.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",

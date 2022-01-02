@@ -7,56 +7,63 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
+  StyleSheet,
 } from "react-native";
 import { Entypo } from "@expo/vector-icons";
 import tw from "tailwind-rn";
 import storage from "@react-native-firebase/storage";
 import ImageCarousel from "../components/ImageCarousel";
 import { SharedElement } from "react-navigation-shared-element";
+import LottieView from "lottie-react-native";
 
 let ScreenWidth = Dimensions.get("window").width;
 const TindererProfile = ({ route, navigation }) => {
   console.log(route);
   const tinderer = route.params.tinderer;
-
+  const loader = useRef();
   const [images, setImages] = useState([]);
   const [openImageModal, setOpenImageModal] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const opacity = useRef(new Animated.Value(0)).current;
 
-  async function listFilesAndDirectories(reference, pageToken) {
-    return reference.list({ pageToken }).then(async (result) => {
-      // Loop over each item
-      // result.items.forEach(async ref => {
-      //   console.log(ref.fullPath);
-      //   const url = await storage().ref(ref.fullPath).getDownloadURL();
-      // });
-
-      const urls = await Promise.all(
-        result.items.map(async (ref) => {
-          const url = await storage().ref(ref.fullPath).getDownloadURL();
-          return url;
-        })
-      );
-
-      setImages(urls);
-      console.log(urls);
-
-      if (result.nextPageToken) {
-        return listFilesAndDirectories(reference, result.nextPageToken);
-      }
-
-      return Promise.resolve();
-    });
-  }
-
   useEffect(() => {
     const reference = storage().ref(`${tinderer.id}`);
+    let isSubscribed = true;
+    async function listFilesAndDirectories(reference, pageToken) {
+      return reference.list({ pageToken }).then(async (result) => {
+        // Loop over each item
+        // result.items.forEach(async ref => {
+        //   console.log(ref.fullPath);
+        //   const url = await storage().ref(ref.fullPath).getDownloadURL();
+        // });
 
+        const urls = await Promise.all(
+          result.items.map(async (ref) => {
+            const url = await storage().ref(ref.fullPath).getDownloadURL();
+            return url;
+          })
+        );
+
+        if (isSubscribed) {
+          setImages(urls);
+          console.log(urls);
+        }
+
+        if (result.nextPageToken) {
+          return listFilesAndDirectories(reference, result.nextPageToken);
+        }
+
+        return Promise.resolve();
+      });
+    }
     //@ts-ignore
     listFilesAndDirectories(reference).then(() => {
       console.log("Finished listing");
     });
+
+    return () => {
+      isSubscribed = false;
+    };
   }, []);
 
   const showImageModal = (index) => {
@@ -71,6 +78,9 @@ const TindererProfile = ({ route, navigation }) => {
       delay: 500,
       useNativeDriver: true,
     }).start();
+
+    //@ts-ignore
+    loader?.current?.play();
   }, []);
 
   return (
@@ -85,7 +95,13 @@ const TindererProfile = ({ route, navigation }) => {
       ) : (
         <ScrollView style={{ backgroundColor: "#000" }}>
           {/* HEADER */}
-          <View style={{ width: "100%", height: 0.75 * ScreenWidth, marginBottom: 20 }}>
+          <View
+            style={{
+              width: "100%",
+              height: 0.75 * ScreenWidth,
+              marginBottom: 20,
+            }}
+          >
             <SharedElement id={tinderer.id}>
               <Image
                 source={{ uri: tinderer.photoURL }}
@@ -120,7 +136,7 @@ const TindererProfile = ({ route, navigation }) => {
             <Text>{tinderer.occupation}</Text>
           </Animated.View> */}
 
-          <View style = {tw("w-full px-6 py-2")}>
+          <View style={tw("w-full px-6 py-2")}>
             <View style={[tw("mb-2")]}>
               <View style={[tw("justify-center")]}>
                 <SharedElement id={`info${tinderer.id}`}>
@@ -152,6 +168,22 @@ const TindererProfile = ({ route, navigation }) => {
             </View>
           </View>
 
+          {!(images.length > 0) && (
+            <View style = {{display: "flex" , alignItems: "center"}}>
+              <LottieView
+                ref={loader}
+                style={{
+                  width: ScreenWidth * 0.8,
+                  backgroundColor: "#000",
+                }}
+                source={require("../images/loader.json")}
+                // OR find more Lottie files @ https://lottiefiles.com/featured
+                // Just click the one you like, place that file in the 'assets' folder to the left, and replace the above 'require' statement
+              />
+              <Text style = {[{color: "#00ff90"}, tw("text-2xl font-bold")]}>Fetching ...</Text>
+            </View>
+          )}
+
           <View
             style={{
               width: "100%",
@@ -178,5 +210,9 @@ const TindererProfile = ({ route, navigation }) => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  lottie: {},
+});
 
 export default TindererProfile;

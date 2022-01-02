@@ -21,8 +21,8 @@ import ImageCarousel from "../components/ImageCarousel";
 import { TagSelect } from "react-native-tag-select";
 import SettingsModal from "../components/SettingsModal";
 import { InfoForm } from "../components/InfoForm";
-import { Video, AVPlaybackStatus } from 'expo-av';
-// import video from "../images/test.mp4";
+import LottieView from "lottie-react-native";
+import { Dimensions } from "react-native";
 
 const data = [
   { id: 1, label: "Money" },
@@ -46,6 +46,8 @@ const data = [
   { id: 19, label: "Karaoke" },
 ];
 
+let ScreenWidth = Dimensions.get("window").width;
+
 const ModalScreen = ({ navigation }) => {
   const { userInfo } = useUserInfo();
 
@@ -60,13 +62,15 @@ const ModalScreen = ({ navigation }) => {
   const [openImageModal, setOpenImageModal] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
-
+  const loader = useRef();
   const tag = useRef();
 
   useEffect(() => {
     setuserInfoState({
       ...userInfo,
     });
+    //@ts-ignore
+    loader?.current?.play();
   }, []);
 
   useEffect(() => {
@@ -107,38 +111,44 @@ const ModalScreen = ({ navigation }) => {
     }
   };
 
-  async function listFilesAndDirectories(reference, pageToken) {
-    return reference.list({ pageToken }).then(async (result) => {
-      // Loop over each item
-      // result.items.forEach(async ref => {
-      //   console.log(ref.fullPath);
-      //   const url = await storage().ref(ref.fullPath).getDownloadURL();
-      // });
-
-      const urls = await Promise.all(
-        result.items.map(async (ref) => {
-          const url = await storage().ref(ref.fullPath).getDownloadURL();
-          return url;
-        })
-      );
-
-      setImages(urls);
-      console.log(urls);
-
-      if (result.nextPageToken) {
-        return listFilesAndDirectories(reference, result.nextPageToken);
-      }
-      return Promise.resolve();
-    });
-  }
-
   useEffect(() => {
+    let isSubscribed = true;
     const reference = storage().ref(`${userInfo.id}`);
 
+    async function listFilesAndDirectories(reference, pageToken) {
+      return reference.list({ pageToken }).then(async (result) => {
+        // Loop over each item
+        // result.items.forEach(async ref => {
+        //   console.log(ref.fullPath);
+        //   const url = await storage().ref(ref.fullPath).getDownloadURL();
+        // });
+
+        const urls = await Promise.all(
+          result.items.map(async (ref) => {
+            const url = await storage().ref(ref.fullPath).getDownloadURL();
+            return url;
+          })
+        );
+
+        if (isSubscribed) {
+          setImages(urls);
+          console.log(urls);
+        }
+
+        if (result.nextPageToken) {
+          return listFilesAndDirectories(reference, result.nextPageToken);
+        }
+        return Promise.resolve();
+      });
+    }
     //@ts-ignore
     listFilesAndDirectories(reference).then(() => {
       console.log("Finished listing");
     });
+
+    return () => {
+      isSubscribed = false;
+    };
   }, []);
 
   const SaveUserInfo = () => {
@@ -185,16 +195,36 @@ const ModalScreen = ({ navigation }) => {
         <FlatList
           ref={flatList}
           ListHeaderComponent={
-            <ProfileHeader
-              pickImage={pickImage}
-              navigation={navigation}
-              scrollToEditInfo={scrollToEditInfo}
-              setSettingsModalVisible={setSettingsModalVisible}
-            />
+            <>
+              <ProfileHeader
+                pickImage={pickImage}
+                navigation={navigation}
+                scrollToEditInfo={scrollToEditInfo}
+                setSettingsModalVisible={setSettingsModalVisible}
+              />
+              {!(images.length > 0) && (
+                <View style={{ alignItems: "center" }}>
+                  <LottieView
+                    ref={loader}
+                    style={{
+                      width: ScreenWidth * 0.8,
+                      backgroundColor: "#f2f2f2",
+                    }}
+                    source={require("../images/loader2.json")}
+                    // OR find more Lottie files @ https://lottiefiles.com/featured
+                    // Just click the one you like, place that file in the 'assets' folder to the left, and replace the above 'require' statement
+                  />
+                  <Text
+                    style={[{ color: "#00ff90" }, tw("text-2xl font-bold")]}
+                  >
+                    Fetching ...
+                  </Text>
+                </View>
+              )}
+            </>
           }
           ListFooterComponent={
             <>
-
               <InfoForm
                 userInfo={userInfoState}
                 setuserInfoState={setuserInfoState}
