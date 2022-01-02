@@ -4,6 +4,7 @@ import { SharedElement } from "react-navigation-shared-element";
 import { LinearGradient } from "expo-linear-gradient";
 import tw from "tailwind-rn";
 import Tindercard from "react-tinder-card";
+import { Video, AVPlaybackStatus } from 'expo-av';
 
 const TinderCard = ({
   tinderer,
@@ -58,6 +59,7 @@ const TinderCard = ({
                 },
               ]}
             />
+
           </SharedElement>
 
           {/* INFO */}
@@ -181,6 +183,16 @@ export const styles = StyleSheet.create({
   yellowBorder: {
     borderColor: "rgb(252, 204, 82)",
     borderWidth: 2,
+  },
+
+  Video: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    height: "100%",
+    width: "100%",
   },
 });
 export default TinderCard;

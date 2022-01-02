@@ -20,6 +20,9 @@ import { uid } from "uid";
 import ImageCarousel from "../components/ImageCarousel";
 import { TagSelect } from "react-native-tag-select";
 import SettingsModal from "../components/SettingsModal";
+import { InfoForm } from "../components/InfoForm";
+import { Video, AVPlaybackStatus } from 'expo-av';
+// import video from "../images/test.mp4";
 
 const data = [
   { id: 1, label: "Money" },
@@ -125,7 +128,6 @@ const ModalScreen = ({ navigation }) => {
       if (result.nextPageToken) {
         return listFilesAndDirectories(reference, result.nextPageToken);
       }
-
       return Promise.resolve();
     });
   }
@@ -168,7 +170,10 @@ const ModalScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <SettingsModal settingsModalVisible={settingsModalVisible} setSettingsModalVisible={setSettingsModalVisible}/>
+      <SettingsModal
+        settingsModalVisible={settingsModalVisible}
+        setSettingsModalVisible={setSettingsModalVisible}
+      />
       {openImageModal ? (
         <ImageCarousel
           images={images}
@@ -189,6 +194,7 @@ const ModalScreen = ({ navigation }) => {
           }
           ListFooterComponent={
             <>
+
               <InfoForm
                 userInfo={userInfoState}
                 setuserInfoState={setuserInfoState}
@@ -256,74 +262,6 @@ const ModalScreen = ({ navigation }) => {
   );
 };
 
-const InfoForm = ({ userInfo, type, setuserInfoState }) => {
-  const setUserInfoBasedOntype = (userinfo, text, type) => {
-    if (type === "fullName") {
-      setuserInfoState({
-        ...userinfo,
-        fullName: text,
-      });
-    } else if (type === "age") {
-      setuserInfoState({
-        ...userinfo,
-        age: text,
-      });
-    } else if (type === "occupation") {
-      setuserInfoState({
-        ...userinfo,
-        occupation: text,
-      });
-    } else if (type === "photoURL") {
-      setuserInfoState({
-        ...userinfo,
-        photoURL: text,
-      });
-    }
-  };
-
-  const ToValueBasedOntype = (userInfo, type) => {
-    let value;
-    if (type === "fullName") {
-      value = userInfo?.fullName;
-    } else if (type === "occupation") {
-      value = userInfo?.occupation;
-    } else if (type === "age") {
-      value = userInfo?.age?.toString();
-    } else if (type === "photoURL") {
-      value = userInfo?.photoURL;
-    }
-
-    //   else if (type === "tags"){
-    //       value = userInfo?.tags;
-    //   }
-    return value;
-  };
-
-  const TitleBasedOntype = (type) => {
-    let title;
-    if (type === "fullName") {
-      title = "Full Name";
-    } else if (type === "occupation") {
-      title = "Occupation"
-    } else if (type === "age") {
-      title = "Age";
-    } 
-    return title;
-  } 
-  return (
-    <>
-      <Text style={tw("text-xl text-gray-700 px-4 mt-6 font-bold")}>
-        {TitleBasedOntype(type)}
-      </Text>
-      <TextInput
-        value={ToValueBasedOntype(userInfo, type)}
-        onChangeText={(text) => setUserInfoBasedOntype(userInfo, text, type)}
-        style={tw("text-xl bg-white py-3 px-4")}
-      />
-    </>
-  );
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -378,6 +316,10 @@ const styles = StyleSheet.create({
   },
   labelSelected: {
     color: "#FFF",
+  },
+  Video: {
+    height: 300,
+    width: 300,
   },
 });
 
