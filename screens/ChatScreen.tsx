@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
 import tw from "tailwind-rn";
 import firestore from "@react-native-firebase/firestore";
 import { useUserInfo } from "../hooks/useUserInfo";
@@ -8,19 +8,30 @@ import ChatHeader from "../components/ChatHeader";
 const ChatScreen = ({ navigation }) => {
   const { userInfo } = useUserInfo();
   const [rooms, setRooms] = useState([]);
+  const [latestmessage, setLatestMessage] = useState("");
 
   useEffect(() => {
     const unsubscribe = firestore()
       .collection("match")
       .where("matchIDs", "array-contains", userInfo.id)
-      .onSnapshot((querysnapshot) => {
+      .onSnapshot(async (querysnapshot) => {
         const newrooms = [];
         querysnapshot.forEach((documentsnapshot) => {
           newrooms.push({
             id: documentsnapshot.id,
             ...documentsnapshot.data(),
           });
+          firestore()
+            .collection("match")
+            .doc(documentsnapshot.id)
+            .collection("messages")
+            .orderBy("createdAt", "desc").get().then(doc => {
+              setLatestMessage(doc?.docs[0]?.data().text);
+            });
         });
+
+        //get room latest message
+
         setRooms(newrooms);
       });
     return unsubscribe;
@@ -28,20 +39,25 @@ const ChatScreen = ({ navigation }) => {
 
   return (
     <>
-      <ChatHeader  navigation= {navigation} title="Chat" callEnabled={false} whiteBackground={false} />
+      <ChatHeader
+        navigation={navigation}
+        title="Chat"
+        callEnabled={false}
+        whiteBackground={false}
+      />
 
-      <View style={tw("flex-1 px-2")}>
+      <ScrollView style={tw("flex-1 px-2")}>
         {rooms.map((room, index) => (
-          <ShowRoomdata room={room} key={index} navigation={navigation} />
+          <ShowRoomdata latestmessage={latestmessage} room={room} key={index} navigation={navigation} />
         ))}
-      </View>
+      </ScrollView>
     </>
   );
 };
 
 export default ChatScreen;
 
-const ShowRoomdata = ({ room, navigation }) => {
+const ShowRoomdata = ({ room, navigation, latestmessage }) => {
   const { userInfo } = useUserInfo();
   const [roomMessage, setroomMessage] = useState();
   const OtherProfile =
@@ -64,7 +80,7 @@ const ShowRoomdata = ({ room, navigation }) => {
         style={tw("w-full bg-white rounded-xl py-3 px-2 flex-row items-center")}
         onPress={() =>
           navigation.navigate("ChatRoom", {
-            roomid : room.id,
+            roomid: room.id,
             OtherProfile,
           })
         }
@@ -76,6 +92,9 @@ const ShowRoomdata = ({ room, navigation }) => {
         <View>
           <Text style={tw("ml-3 font-bold text-xl")}>
             {OtherProfile?.fullName}
+          </Text>
+          <Text style={tw("ml-3 text-xl")}>
+            {latestmessage}
           </Text>
         </View>
       </TouchableOpacity>

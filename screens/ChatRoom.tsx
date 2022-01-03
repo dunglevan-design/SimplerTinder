@@ -4,12 +4,20 @@ import { Ionicons } from "@expo/vector-icons";
 import firestore from "@react-native-firebase/firestore";
 import { useUserInfo } from "../hooks/useUserInfo";
 import ChatHeader from "../components/ChatHeader";
+import * as ImagePicker from "expo-image-picker";
+import storage from "@react-native-firebase/storage";
+import { uid } from "uid";
+import { Text, View } from "react-native";
+import { Video, AVPlaybackStatus } from 'expo-av';
 
 export function Chatroom({ route, navigation }) {
   const { userInfo } = useUserInfo();
   const [messages, setMessages] = useState([]);
   const roomid = route.params.roomid;
   const OtherProfile = route.params.OtherProfile;
+  const [image, setImage] = useState("");
+  const [video, setVideo] = useState("");
+
   const GetMessages = (roomid) => {
     const unsubscribe = firestore()
       .collection("match")
@@ -35,6 +43,7 @@ export function Chatroom({ route, navigation }) {
             },
           });
         });
+
         console.log(newMessages);
         setMessages(newMessages);
       });
@@ -45,9 +54,21 @@ export function Chatroom({ route, navigation }) {
     return unsubscribe;
   }, [roomid]);
 
+  useEffect(() => {
+    console.log("you just set image state to: ", image);
+  }, [image]);
+
+  useEffect(() => {
+    console.log("you just set video state to: ", video);
+  }, [video]);
+
+
   const onSend = useCallback((messages = []) => {
+    console.log("video: ", video);
     const newMessages = messages.map((message) => ({
       ...message,
+      image: image,
+      video: video,
       user: {
         _id: 1,
         name: userInfo.fullName,
@@ -73,38 +94,101 @@ export function Chatroom({ route, navigation }) {
     setMessages((previousMessages) =>
       GiftedChat.append(previousMessages, newMessages)
     );
+    // setImage("");
+    // setVideo("");
   }, []);
 
+  async function handlePickImage() {
+    // No permissions request is necessary for launching the image library
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (!result.cancelled) {
+      //upload image to bucket
+      const reference = storage().ref(`${roomid}/${uid()}`);
+      //@ts-ignore
+      const task = reference.putFile(result.uri);
+
+      task.on("state_changed", (taskSnapshot) => {
+        console.log(
+          `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`
+        );
+      });
+
+      task.then(async () => {
+        console.log("Image uploaded to the bucket!");
+        const url = await reference.getDownloadURL();
+
+        const type = (await reference.getMetadata()).contentType;
+        if (type === "image/jpeg") {
+          console.log("you sent an image");
+          setImage(url);
+        } else {
+          console.log("you sent a video");
+          setVideo(url);
+        }
+      });
+    }
+  }
+
+  function handlePickAudio() {
+    console.log("picking audio");
+  }
+
+  function renderActions(props: Readonly<ActionsProps>) {
+    return (
+      <Actions
+        {...props}
+        options={{
+          ["Send Image/Video"]: handlePickImage,
+          ["Send Audio"]: handlePickAudio,
+        }}
+        icon={() => (
+          <Ionicons name="add-circle-outline" size={24} color="black" />
+        )}
+        onSend={(args) => console.log(args, "dsdfsdflgsdfgjs;dfgjsd;flg")}
+      />
+    );
+  }
+
+  function renderMessageVideo(messages){
+    console.log("message >>>>>>>>>>>", messages);
+    return (
+      <Video
+      style={{width: 300, height: 300, borderRadius: 5, backgroundColor: "#000"}}
+      source={{
+        uri: messages.currentMessage.video,
+      }}
+      useNativeControls
+      resizeMode="cover"
+      isLooping
+      shouldPlay={true}
+    />
+    )
+  }
   return (
     <>
-      <ChatHeader title={OtherProfile.fullName} callEnabled={true} navigation={navigation} whiteBackground={false}/> 
+      <ChatHeader
+        title={OtherProfile.fullName}
+        callEnabled={true}
+        navigation={navigation}
+        whiteBackground={false}
+      />
       <GiftedChat
         messages={messages}
         onSend={(messages) => onSend(messages)}
         renderActions={renderActions}
         loadEarlier={true}
+        renderMessageVideo = {(messages) => renderMessageVideo(messages)}
         user={{
           _id: 1,
         }}
       />
     </>
-  );
-}
-
-function renderActions(props: Readonly<ActionsProps>) {
-  function handlePickImage() {
-    console.log("picking image");
-  }
-  return (
-    <Actions
-      {...props}
-      options={{
-        ["Send Image"]: handlePickImage,
-      }}
-      icon={() => (
-        <Ionicons name="add-circle-outline" size={24} color="black" />
-      )}
-      onSend={(args) => console.log(args)}
-    />
   );
 }
