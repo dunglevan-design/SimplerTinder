@@ -7,8 +7,8 @@ import ChatHeader from "../components/ChatHeader";
 import * as ImagePicker from "expo-image-picker";
 import storage from "@react-native-firebase/storage";
 import { uid } from "uid";
-import { Text, View } from "react-native";
-import { Video, AVPlaybackStatus } from 'expo-av';
+import { Image, Text, View } from "react-native";
+import { Video, AVPlaybackStatus } from "expo-av";
 
 export function Chatroom({ route, navigation }) {
   const { userInfo } = useUserInfo();
@@ -24,7 +24,8 @@ export function Chatroom({ route, navigation }) {
       .doc(roomid)
       .collection("messages")
       .orderBy("createdAt", "desc")
-      .onSnapshot((querySnapshot) => {
+      .get()
+      .then((querySnapshot) => {
         const newMessages = [];
         querySnapshot.forEach((documentSnapshot) => {
           const isSelf = documentSnapshot.data().user._id === userInfo.id;
@@ -44,14 +45,13 @@ export function Chatroom({ route, navigation }) {
           });
         });
 
-        console.log(newMessages);
+        console.log("intiial room message : >>>>", newMessages);
         setMessages(newMessages);
       });
     return unsubscribe;
   };
   useEffect(() => {
-    const unsubscribe = GetMessages(roomid);
-    return unsubscribe;
+    GetMessages(roomid);
   }, [roomid]);
 
   useEffect(() => {
@@ -62,41 +62,44 @@ export function Chatroom({ route, navigation }) {
     console.log("you just set video state to: ", video);
   }, [video]);
 
+  const onSend = useCallback(
+    (messages = []) => {
+      console.log("image: ", image);
+      const newMessages = messages.map((message) => ({
+        ...message,
+        image: image,
+        video: video,
+        user: {
+          _id: 1,
+          name: userInfo.fullName,
+          avatar: userInfo.photoURL,
+        },
+      }));
 
-  const onSend = useCallback((messages = []) => {
-    console.log("video: ", video);
-    const newMessages = messages.map((message) => ({
-      ...message,
-      image: image,
-      video: video,
-      user: {
-        _id: 1,
-        name: userInfo.fullName,
-        avatar: userInfo.photoURL,
-      },
-    }));
-    console.log(newMessages);
-    newMessages.forEach((message) => {
-      firestore()
-        .collection("match")
-        .doc(roomid)
-        .collection("messages")
-        .add({
-          ...message,
-          createdAt: firestore.FieldValue.serverTimestamp(),
-          user: {
-            _id: userInfo.id,
-            avatar: userInfo.photoURL,
-            name: userInfo.fullName,
-          },
-        });
-    });
-    setMessages((previousMessages) =>
-      GiftedChat.append(previousMessages, newMessages)
-    );
-    // setImage("");
-    // setVideo("");
-  }, []);
+      console.log("new messages: >>>>", newMessages);
+      newMessages.forEach((message) => {
+        firestore()
+          .collection("match")
+          .doc(roomid)
+          .collection("messages")
+          .add({
+            ...message,
+            createdAt: firestore.FieldValue.serverTimestamp(),
+            user: {
+              _id: userInfo.id,
+              avatar: userInfo.photoURL,
+              name: userInfo.fullName,
+            },
+          });
+      });
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, newMessages)
+      );
+      setImage("");
+      setVideo("");
+    },
+    [image, video]
+  );
 
   async function handlePickImage() {
     // No permissions request is necessary for launching the image library
@@ -105,8 +108,6 @@ export function Chatroom({ route, navigation }) {
       allowsEditing: true,
       quality: 1,
     });
-
-    console.log(result);
 
     if (!result.cancelled) {
       //upload image to bucket
@@ -136,41 +137,76 @@ export function Chatroom({ route, navigation }) {
     }
   }
 
-  function handlePickAudio() {
-    console.log("picking audio");
-  }
-
   function renderActions(props: Readonly<ActionsProps>) {
     return (
       <Actions
         {...props}
         options={{
           ["Send Image/Video"]: handlePickImage,
-          ["Send Audio"]: handlePickAudio,
         }}
         icon={() => (
           <Ionicons name="add-circle-outline" size={24} color="black" />
         )}
-        onSend={(args) => console.log(args, "dsdfsdflgsdfgjs;dfgjsd;flg")}
+        // onSend={(args) => console.log(args, "dsdfsdflgsdfgjs;dfgjsd;flg")}
       />
     );
   }
 
-  function renderMessageVideo(messages){
+  const renderMessageVideo = (messages) => {
     console.log("message >>>>>>>>>>>", messages);
     return (
       <Video
-      style={{width: 300, height: 300, borderRadius: 5, backgroundColor: "#000"}}
-      source={{
-        uri: messages.currentMessage.video,
-      }}
-      useNativeControls
-      resizeMode="cover"
-      isLooping
-      shouldPlay={true}
-    />
-    )
-  }
+        style={{
+          width: 300,
+          height: 300,
+          borderRadius: 5,
+          backgroundColor: "#000",
+        }}
+        source={{
+          uri: messages?.currentMessage.video,
+        }}
+        useNativeControls
+        resizeMode="cover"
+        isLooping
+        shouldPlay={true}
+      />
+    );
+  };
+
+  const renderFooter = () => {
+    return (
+      <>
+        {image ? (
+          <Image
+            source={{ uri: image }}
+            style={{ width: 70, height: 80, marginLeft: "20%" }}
+          ></Image>
+        ) : (
+          <></>
+        )}
+        {video ? (
+          <Video
+            style={{
+              width: 100,
+              height: 100,
+              borderRadius: 5,
+              backgroundColor: "#000",
+            }}
+            source={{
+              uri: video,
+            }}
+            useNativeControls
+            resizeMode="cover"
+            isLooping
+            shouldPlay={true}
+          />
+        ) : (
+          <></>
+        )}
+      </>
+    );
+  };
+
   return (
     <>
       <ChatHeader
@@ -184,7 +220,8 @@ export function Chatroom({ route, navigation }) {
         onSend={(messages) => onSend(messages)}
         renderActions={renderActions}
         loadEarlier={true}
-        renderMessageVideo = {(messages) => renderMessageVideo(messages)}
+        renderFooter={renderFooter}
+        renderMessageVideo={(messages) => renderMessageVideo(messages)}
         user={{
           _id: 1,
         }}
