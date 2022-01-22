@@ -173,14 +173,13 @@ const TindererProfile = ({ route, navigation }) => {
               <LottieView
                 ref={loader}
                 style={{
-                  width: ScreenWidth * 0.8,
+                  width: ScreenWidth,
                   backgroundColor: "#000",
                 }}
                 source={require("../images/loader.json")}
                 // OR find more Lottie files @ https://lottiefiles.com/featured
                 // Just click the one you like, place that file in the 'assets' folder to the left, and replace the above 'require' statement
               />
-              <Text style = {[{color: "#00ff90"}, tw("text-2xl font-bold")]}>Fetching ...</Text>
             </View>
           )}
 
