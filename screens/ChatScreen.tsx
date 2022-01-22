@@ -47,6 +47,9 @@ const ChatScreen = ({ navigation }) => {
       />
 
       <ScrollView style={tw("flex-1 px-2")}>
+        {
+          rooms.length=== 0 && <Text style = {tw("font-bold text-xl text-center")}>you currently has no matches, swipe to get more ❤️</Text>
+        }
         {rooms.map((room, index) => (
           <ShowRoomdata latestmessage={latestmessage} room={room} key={index} navigation={navigation} />
         ))}
