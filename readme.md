@@ -7,5 +7,6 @@ https://expo.dev/artifacts/eas/q8RU6cwvD2fc4z7mqVzDzQ.aab
 -clone the repo <br/>
 -install expo CLI <br/>
 -isntall dependencies: run expo install <br/>
+-eas login <br/>
 -Create build configuration: eas build:configure <br/>
 -Generate the build: eas build --platform android.
